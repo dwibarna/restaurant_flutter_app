@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_stars/flutter_rating_stars.dart';
-import 'package:restaurant_flutter_app/model/restaurant.dart';
+import 'package:provider/provider.dart';
+import 'package:restaurant_flutter_app/data/api/api_service.dart';
+
+import '../../../data/model/restaurant.dart';
+import '../../../provider/main_provider.dart';
+import '../../../provider/result_state.dart';
+import '../../custom_widget/error_widget.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({Key? key}) : super(key: key);
@@ -13,6 +19,15 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   String queryText = '';
+  final TextEditingController _textSearchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    MainProvider(
+      apiService: ApiService(),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,23 +36,14 @@ class _MainScreenState extends State<MainScreen> {
         child: SizedBox(
           height: MediaQuery.of(context).size.height,
           child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _buildMainHeader(),
-                const SizedBox(
-                  height: 16,
-                ),
-                _buildList(context)
-              ],
-            ),
+            child: _buildList(),
           ),
         ),
       ),
     );
   }
 
-  Padding _buildMainHeader() {
+  Padding _buildMainHeader(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -50,48 +56,59 @@ class _MainScreenState extends State<MainScreen> {
           const SizedBox(
             width: 4,
           ),
-          Expanded(child: _buildSearch()),
+          Expanded(child: _buildSearch(context)),
         ],
       ),
     );
   }
 
-  FutureBuilder<String> _buildList(BuildContext context) {
-    return FutureBuilder<String>(
-        future: DefaultAssetBundle.of(context)
-            .loadString('assets/local_restaurant.json'),
-        builder: (_, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
+  ChangeNotifierProvider<MainProvider> _buildList() {
+    return ChangeNotifierProvider(
+      create: (_) => MainProvider(
+        apiService: ApiService(),
+      ),
+      child: Consumer<MainProvider>(
+        builder: (context, state, _) {
+          if (state.state == ResultState.loading) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (state.state == ResultState.hasData) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildMainHeader(context),
+                const SizedBox(
+                  height: 16,
+                ),
+                _buildListContent(state.restaurantList)
+              ],
             );
-          } else if (snapshot.hasError) {
-            return Center(
-              child: Center(
-                child: Text("${snapshot.hasError}"),
-              ),
+          } else if (state.state == ResultState.noData) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildMainHeader(context),
+                _buildEmptyListWidget(context)
+              ],
             );
-          } else if (snapshot.hasData) {
-            final List<Restaurant> restaurants = parseRestaurant(snapshot.data);
-            final filterRestaurants = restaurants.where((element) {
-              if (queryText.isEmpty) {
-                return true;
-              } else {
-                return element.name
-                    .toLowerCase()
-                    .contains(queryText.toLowerCase());
-              }
-            }).toList();
-            return _buildListContent(filterRestaurants);
+          } else if (state.state == ResultState.error) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildMainHeader(context),
+                buildErrorWidget(context, state.message, () {})
+              ],
+            );
           } else {
-            return const Center(
-              child: Text('No Data'),
-            );
+            return const Center(child: Text(''));
           }
-        });
+        },
+      ),
+    );
   }
 
-  ListView _buildListContent(List<Restaurant> filterRestaurants,) {
+  ListView _buildListContent(
+    List<Restaurant> filterRestaurants,
+  ) {
     return ListView.builder(
         itemCount: filterRestaurants.length,
         primary: false,
@@ -100,7 +117,7 @@ class _MainScreenState extends State<MainScreen> {
           final item = filterRestaurants[idx];
           return InkWell(
             onTap: () {
-              Navigator.pushNamed(context, '/detailScreen', arguments: item);
+              Navigator.pushNamed(context, '/detailScreen', arguments: item.id);
             },
             child: _buildListItem(item, context),
           );
@@ -155,16 +172,16 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  TextField _buildSearch() {
+  TextField _buildSearch(BuildContext context) {
     return TextField(
+      controller: _textSearchController,
       keyboardType: TextInputType.text,
       onChanged: (s) {
         queryText = s;
       },
       onSubmitted: (s) {
-        setState(() {
-          queryText = s;
-        });
+        queryText = s;
+        context.read<MainProvider>().getSearchRestaurant(queryText);
       },
       decoration: InputDecoration(
           border: OutlineInputBorder(
@@ -182,6 +199,32 @@ class _MainScreenState extends State<MainScreen> {
           ),
           filled: true,
           fillColor: Colors.green.shade100),
+    );
+  }
+
+  Widget _buildEmptyListWidget(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.search_off,
+            color: Colors.grey,
+            size: 64,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Data is Empty',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Please try again with other query',
+            style: Theme.of(context).textTheme.bodyMedium,
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
     );
   }
 }

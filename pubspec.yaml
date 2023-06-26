@@ -37,6 +37,9 @@ dependencies:
   cupertino_icons: ^1.0.2
   flutter_spinkit: ^5.2.0
   flutter_rating_stars: ^1.0.3+4
+  provider: ^6.0.5
+  readmore: ^2.2.0
+  http: ^1.0.0
 
 dev_dependencies:
   flutter_test:
@@ -57,7 +60,6 @@ flutter:
   uses-material-design: true
   assets:
     - assets/restaurant_logo.png
-    - assets/local_restaurant.json
     - assets/placeholder_menu.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
