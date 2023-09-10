@@ -3,6 +3,7 @@ import 'package:flutter_rating_stars/flutter_rating_stars.dart';
 import 'package:provider/provider.dart';
 import 'package:readmore/readmore.dart';
 import 'package:restaurant_flutter_app/data/api/api_service.dart';
+import 'package:restaurant_flutter_app/data/floor/entity/favorite_entity.dart';
 import 'package:restaurant_flutter_app/provider/detail_provider.dart';
 import 'package:restaurant_flutter_app/provider/result_state.dart';
 
@@ -10,21 +11,10 @@ import '../../../data/model/customer_reviews.dart';
 import '../../../data/model/detail_restaurant.dart';
 import '../../custom_widget/error_widget.dart';
 
-class DetailScreen extends StatefulWidget {
+class DetailScreen extends StatelessWidget {
   final String restaurantId;
 
   const DetailScreen(this.restaurantId, {Key? key}) : super(key: key);
-
-  @override
-  State<StatefulWidget> createState() {
-    return _DetailScreenState();
-  }
-}
-
-class _DetailScreenState extends State<DetailScreen> {
-  void retryCallBack(BuildContext context) {
-    context.read<DetailProvider>().getDetailRestaurant(widget.restaurantId);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,11 +23,19 @@ class _DetailScreenState extends State<DetailScreen> {
     );
   }
 
+  void retryCallBack(BuildContext context) {
+    context.read<DetailProvider>().getDetailRestaurant(restaurantId);
+  }
+
   ChangeNotifierProvider<DetailProvider> _builderDetailScreen(
       BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => DetailProvider(
-          apiService: ApiService(), restaurantId: widget.restaurantId),
+      create: (_) {
+        return DetailProvider(
+          apiService: ApiService(),
+          restaurantId: restaurantId,
+        );
+      },
       child: Consumer<DetailProvider>(
         builder: (context, state, _) {
           if (state.state == ResultState.loading) {
@@ -67,7 +65,8 @@ class _DetailScreenState extends State<DetailScreen> {
       slivers: [
         _buildHeaderSticky(detailRestaurant.pictureId),
         SliverPersistentHeader(
-          delegate: _TitleDelegate(detailRestaurant),
+          delegate: _TitleDelegate(
+              detailRestaurant, context.read<DetailProvider>().stateFavorite),
           pinned: true,
         ),
         _buildContentBox(context, detailRestaurant),
@@ -278,8 +277,7 @@ class _DetailScreenState extends State<DetailScreen> {
                           if (name.isNotEmpty && review.isNotEmpty) {
                             context
                                 .read<DetailProvider>()
-                                .postUpdateReview(
-                                    widget.restaurantId, review, name)
+                                .postUpdateReview(restaurantId, review, name)
                                 .then((value) => null);
                             retryCallBack(context);
                           } else {
@@ -307,7 +305,7 @@ class _DetailScreenState extends State<DetailScreen> {
   SizedBox _buildListReview(List<CustomerReview> list) {
     return SizedBox(
       height: 140,
-      width: double.infinity,
+//      width: ,
       child: ListView.builder(
         itemCount: list.length,
         padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -347,41 +345,77 @@ class _DetailScreenState extends State<DetailScreen> {
 
 class _TitleDelegate extends SliverPersistentHeaderDelegate {
   final DetailRestaurant restaurant;
+  bool isFavorite;
 
-  _TitleDelegate(this.restaurant);
+  _TitleDelegate(this.restaurant, this.isFavorite);
 
   @override
   Widget build(
-      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.only(left: 16, bottom: 16, top: 4),
       alignment: Alignment.bottomLeft,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Text(
-            restaurant.name,
-            style: Theme.of(context).textTheme.headlineMedium,
-          ),
-          const SizedBox(height: 4),
-          Row(
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(
-                Icons.location_pin,
-                color: Colors.red,
-              ),
-              const SizedBox(width: 4),
               Text(
-                '${restaurant.address} ,${restaurant.city}',
-                style: Theme.of(context).textTheme.bodyMedium,
-              )
+                restaurant.name,
+                style: Theme.of(context).textTheme.headlineMedium,
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  const Icon(
+                    Icons.location_pin,
+                    color: Colors.red,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${restaurant.address} ,${restaurant.city}',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              RatingStars(
+                value: restaurant.rating,
+                starSize: 14,
+              ),
             ],
           ),
-          const SizedBox(height: 8),
-          RatingStars(
-            value: restaurant.rating,
-            starSize: 14,
+          Expanded(
+            child: Align(
+              alignment: Alignment.bottomRight,
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: FloatingActionButton(
+                  child: Icon(
+                    isFavorite ? Icons.favorite : Icons.favorite_border,
+                    color: Colors.red,
+                  ),
+                  onPressed: () {
+                    context.read<DetailProvider>().updateFavoriteRestaurant(
+                        isFavorite,
+                        RestaurantEntity(
+                            restaurant.id,
+                            restaurant.name,
+                            restaurant.rating,
+                            restaurant.pictureId,
+                            restaurant.city
+                        )
+                    );
+                    context.read<DetailProvider>()
+                        .getDetailRestaurant(restaurant.id);
+                  },
+                ),
+              ),
+            ),
           ),
         ],
       ),

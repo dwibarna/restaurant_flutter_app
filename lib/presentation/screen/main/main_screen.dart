@@ -30,8 +30,40 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   @override
+  void dispose() {
+    super.dispose();
+    _textSearchController.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text("Restaurant App"),
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (type) {
+              if (type == 'Setting') {
+
+              } else if (type == "Favorite") {
+                Navigator.pushNamed(context, '/favoriteScreen');
+              }
+            },
+            itemBuilder: (context) {
+              return [
+                const PopupMenuItem(
+                  value: 'Setting',
+                    child: Text('Setting')
+                ),
+                const PopupMenuItem(
+                  value: 'Favorite',
+                    child: Text('Favorite')
+                )
+              ];
+            },
+          )
+        ],
+      ),
       body: SafeArea(
         child: SizedBox(
           height: MediaQuery.of(context).size.height,
@@ -111,6 +143,7 @@ class _MainScreenState extends State<MainScreen> {
   ) {
     return ListView.builder(
         itemCount: filterRestaurants.length,
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
         primary: false,
         shrinkWrap: true,
         itemBuilder: (context, idx) {
@@ -159,7 +192,7 @@ class _MainScreenState extends State<MainScreen> {
             height: 4,
           ),
           Padding(
-            padding: const EdgeInsets.only(left: 8),
+            padding: const EdgeInsets.only(left: 8,bottom: 8),
             child: RatingStars(
               value: item.rating,
             ),
