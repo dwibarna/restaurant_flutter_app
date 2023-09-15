@@ -19,7 +19,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.0.5 <4.0.0'
+  sdk: '>=3.1.1 <4.0.0'
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -39,17 +39,20 @@ dependencies:
   flutter_rating_stars: ^1.0.3+4
   provider: ^6.0.5
   readmore: ^2.2.0
-  http: ^1.0.0
+  http: ^1.1.0
   floor: ^1.4.2
   sqflite_common_ffi: ^2.2.5
-  shared_preferences: ^2.2.0
+  shared_preferences: ^2.2.1
   android_alarm_manager_plus: ^3.0.1
   flutter_local_notifications: ^15.0.1
   rxdart: ^0.27.7
+  intl: ^0.18.1
+  settings_ui: ^2.0.2
+  mockito: ^5.0.0
 
 dev_dependencies:
   floor_generator: ^1.4.2
-  build_runner: ^2.1.2
+  build_runner: ^2.4.6
   flutter_test:
     sdk: flutter
 

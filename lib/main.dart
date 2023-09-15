@@ -1,11 +1,34 @@
+import 'dart:io';
+
+import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:restaurant_flutter_app/common/navigation.dart';
 import 'package:restaurant_flutter_app/presentation/screen/favorite/favorite_screen.dart';
+import 'package:restaurant_flutter_app/presentation/screen/setting/setting_screen.dart';
 
-import '../detail/detail_screen.dart';
-import '../main/main_screen.dart';
+import 'utils/background_service.dart';
+import 'utils/notification_helper.dart';
+import 'presentation/screen/detail/detail_screen.dart';
+import 'presentation/screen/main/main_screen.dart';
 
-void main() {
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  final NotificationHelper notificationHelper = NotificationHelper();
+  final BackgroundService service = BackgroundService();
+
+  service.initializeIsolate();
+
+  if (Platform.isAndroid) {
+    await AndroidAlarmManager.initialize();
+  }
+  await notificationHelper.initNotifications(flutterLocalNotificationsPlugin);
+
   runApp(const MyApp());
 }
 
@@ -19,6 +42,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
           useMaterial3: true),
+      navigatorKey: navigatorKey,
       initialRoute: '/',
       routes: {
         '/': (context) => const MyHomePage(),
@@ -26,6 +50,7 @@ class MyApp extends StatelessWidget {
         '/detailScreen': (context) =>
             DetailScreen(ModalRoute.of(context)?.settings.arguments as String),
         '/favoriteScreen': (context) => const FavoriteScreen(),
+        '/settingScreen': (context) => const SettingScreen()
       },
     );
   }

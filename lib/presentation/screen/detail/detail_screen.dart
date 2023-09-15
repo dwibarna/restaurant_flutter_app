@@ -10,6 +10,7 @@ import 'package:restaurant_flutter_app/provider/result_state.dart';
 import '../../../data/model/customer_reviews.dart';
 import '../../../data/model/detail_restaurant.dart';
 import '../../custom_widget/error_widget.dart';
+import 'package:http/http.dart' as http;
 
 class DetailScreen extends StatelessWidget {
   final String restaurantId;
@@ -32,7 +33,7 @@ class DetailScreen extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (_) {
         return DetailProvider(
-          apiService: ApiService(),
+          apiService: ApiService(http.Client()),
           restaurantId: restaurantId,
         );
       },

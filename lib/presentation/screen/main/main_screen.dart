@@ -6,7 +6,9 @@ import 'package:restaurant_flutter_app/data/api/api_service.dart';
 import '../../../data/model/restaurant.dart';
 import '../../../provider/main_provider.dart';
 import '../../../provider/result_state.dart';
+import '../../../utils/notification_helper.dart';
 import '../../custom_widget/error_widget.dart';
+import 'package:http/http.dart' as http;
 
 class MainScreen extends StatefulWidget {
   const MainScreen({Key? key}) : super(key: key);
@@ -20,18 +22,22 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   String queryText = '';
   final TextEditingController _textSearchController = TextEditingController();
+  final NotificationHelper _notificationHelper = NotificationHelper();
 
   @override
   void initState() {
     super.initState();
+    _notificationHelper
+        .configureSelectNotificationSubject('/detailScreen');
     MainProvider(
-      apiService: ApiService(),
+      apiService: ApiService(http.Client()),
     );
   }
 
   @override
   void dispose() {
     super.dispose();
+    selectNotificationSubject.close();
     _textSearchController.dispose();
   }
 
@@ -44,7 +50,7 @@ class _MainScreenState extends State<MainScreen> {
           PopupMenuButton<String>(
             onSelected: (type) {
               if (type == 'Setting') {
-
+                Navigator.pushNamed(context, '/settingScreen');
               } else if (type == "Favorite") {
                 Navigator.pushNamed(context, '/favoriteScreen');
               }
@@ -97,7 +103,7 @@ class _MainScreenState extends State<MainScreen> {
   ChangeNotifierProvider<MainProvider> _buildList() {
     return ChangeNotifierProvider(
       create: (_) => MainProvider(
-        apiService: ApiService(),
+        apiService: ApiService(http.Client()),
       ),
       child: Consumer<MainProvider>(
         builder: (context, state, _) {

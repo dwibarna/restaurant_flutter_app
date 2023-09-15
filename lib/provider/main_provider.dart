@@ -39,8 +39,6 @@ class MainProvider extends ChangeNotifier {
     } finally {
       notifyListeners();
     }
-
-
   }
 
   Future<void> getSearchRestaurant(String query) async {

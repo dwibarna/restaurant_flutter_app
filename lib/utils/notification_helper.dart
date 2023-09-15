@@ -1,7 +1,10 @@
+
 import 'dart:convert';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:restaurant_flutter_app/data/model/restaurant.dart';
 import 'package:rxdart/subjects.dart';
+
+import '../common/navigation.dart';
 
 final selectNotificationSubject = BehaviorSubject<String>();
 
@@ -17,16 +20,11 @@ class NotificationHelper {
   Future<void> initNotifications(
       FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin) async {
     var initializationSettingsAndroid =
-    const AndroidInitializationSettings('app_icon');
-
-    var initializationSettingsIOS = const DarwinInitializationSettings(
-      requestAlertPermission: false,
-      requestBadgePermission: false,
-      requestSoundPermission: false,
-    );
+    const AndroidInitializationSettings("restaurant_logo");
 
     var initializationSettings = InitializationSettings(
-        android: initializationSettingsAndroid, iOS: initializationSettingsIOS);
+        android: initializationSettingsAndroid,
+         );
 
     await flutterLocalNotificationsPlugin.initialize(
       initializationSettings,
@@ -45,7 +43,7 @@ class NotificationHelper {
       Restaurant restaurant) async {
     var channelId = "1";
     var channelName = "channel_01";
-    var channelDescription = "dicoding news channel";
+    var channelDescription = "dwi restaurant channel";
 
     var androidPlatformChannelSpecifics = AndroidNotificationDetails(
         channelId, channelName,
@@ -55,26 +53,28 @@ class NotificationHelper {
         ticker: 'ticker',
         styleInformation: const DefaultStyleInformation(true, true));
 
-    var iOSPlatformChannelSpecifics = const DarwinNotificationDetails();
     var platformChannelSpecifics = NotificationDetails(
       android: androidPlatformChannelSpecifics,
-      iOS: iOSPlatformChannelSpecifics,
     );
 
-    var titleNotification = "<b>Headline News</b>";
-    var titleNews = restaurant.articles[0].title;
+    var titleNotification = "<b>Best Restaurant For You</b>";
+    var title = restaurant.name;
 
     await flutterLocalNotificationsPlugin.show(
-        0, titleNotification, titleNews, platformChannelSpecifics,
-        payload: json.encode(restaurant.toJson()));
+        0,
+        titleNotification,
+        title,
+        platformChannelSpecifics,
+        payload: json.encode(restaurant.toJson())
+    );
   }
 
   void configureSelectNotificationSubject(String route) {
     selectNotificationSubject.stream.listen(
           (String payload) async {
-        var data = ArticlesResult.fromJson(json.decode(payload));
-        var article = data.articles[0];
-        Navigation.intentWithData(route, article);
+        var data = Restaurant.fromJson(json.decode(payload));
+        var restaurant = data;
+        Navigation.intentWithData(route, restaurant.id);
       },
     );
   }
